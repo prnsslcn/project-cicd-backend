@@ -1,7 +1,9 @@
 package com.study.back.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,9 +17,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Autowired
+    private Environment env;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
@@ -52,7 +59,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         CorsConfiguration config = new CorsConfiguration();
         // 자격 증명(예: 쿠키, 인증 헤더)을 포함한 요청을 허용 -> 세션 쿠키를 받겠다
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3000");// 프런트단 리액트 서버, 필요시 포트 변경
+        // 클라우드로 가면 EC2 서버의 IP 혹은 도메인 등 허가해야한다
+        // config.addAllowedOrigin("http://localhost:3000");// 프런트단 리액트 서버, 필요시 포트 변경
+
+        // 여러 개의 IP, 도메인 등 등록 -> 허가된 IP/도메인 n개일 때 처리
+        String release_ip = env.getProperty("app.release_ip");
+        String release_domain = env.getProperty("app.release_domain");
+        String dev_ip = env.getProperty("app.dev_ip");
+        // 일괄 등록
+        config.setAllowedOrigins(Arrays.asList(
+                release_ip,     // 리액트 상용 서버 ip 주소
+                release_domain, // 리액트 상용 서버 도메인
+                dev_ip          // 리액트 개발 서버 ip 주소 
+        ));
+
         // 모든 헤더값 통과
         config.addAllowedHeader("*");
         // 모든 메소드 방식 통과
