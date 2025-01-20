@@ -1,5 +1,5 @@
 # .github/workflows/backend.yml
-name: Deploy for ci/cd
+name: backend for ci/cd
 
 # 트리거
 on:
